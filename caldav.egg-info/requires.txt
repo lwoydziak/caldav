@@ -1,0 +1,6 @@
+vobject
+lxml
+nose
+coverage
+sphinx
+requests

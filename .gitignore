@@ -1,0 +1,7 @@
+.coverage
+caldav.egg-info/
+caldav/__pycache__/
+tests/__pycache__/
+*.bak
+.project
+.pydevproject
