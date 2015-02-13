@@ -6,7 +6,7 @@ A "DAV object" is anything we get from the caldav server or push into the caldav
 """
 
 import vobject
-import StringIO
+import io
 import uuid
 import re
 from lxml import etree
@@ -88,7 +88,7 @@ class DAVObject(object):
                     val = t.text
                 properties[href][p.tag] = val
 
-        for path in properties.keys():
+        for path in list(properties.keys()):
             resource_type = properties[path][dav.ResourceType.tag]
             if resource_type == type or type is None:
                 path = URL.objectify(path)
@@ -158,9 +158,9 @@ class DAVObject(object):
         path = self.url.path
         exchange_path = self.url.path + '/'
 
-        if path in properties.keys():
+        if path in list(properties.keys()):
             rc = properties[path]
-        elif exchange_path in properties.keys():
+        elif exchange_path in list(properties.keys()):
             rc = properties[exchange_path]
         else:
             raise Exception("The CalDAV server you are using has "
@@ -550,7 +550,7 @@ class Event(DAVObject):
 
     def set_data(self, data):
         self._data = vcal.fix(data)
-        self._instance = vobject.readOne(StringIO.StringIO(self._data))
+        self._instance = vobject.readOne(io.StringIO(self._data))
         return self
 
     def get_data(self):

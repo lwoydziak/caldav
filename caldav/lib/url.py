@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import urlparse
+import urllib.parse
 
 def uc2utf8(input):
     ## argh!  this feels wrong, but seems to be needed.
-    if type(input) == unicode:
+    if type(input) == str:
         return input.encode('utf-8')
     else:
         return input
@@ -40,14 +40,14 @@ class URL:
 
     """
     def __init__(self, url):
-        if isinstance(url, urlparse.ParseResult) or isinstance(url, urlparse.SplitResult):
+        if isinstance(url, urllib.parse.ParseResult) or isinstance(url, urllib.parse.SplitResult):
             self.url_parsed = url
             self.url_raw = None
         else:
             self.url_raw = url
             self.url_parsed = None
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self.url_raw or self.url_parsed:
             return True
         else:
@@ -80,7 +80,7 @@ class URL:
     ## class
     def __getattr__(self, attr):
         if self.url_parsed is None:
-            self.url_parsed = urlparse.urlparse(self.url_raw)
+            self.url_parsed = urllib.parse.urlparse(self.url_raw)
         if hasattr(self.url_parsed, attr):
             return getattr(self.url_parsed, attr)
         else:
@@ -94,10 +94,10 @@ class URL:
     def __unicode__(self):
         if self.url_raw is None:
             self.url_raw = self.url_parsed.geturl()
-        if isinstance(self.url_raw, unicode):
+        if isinstance(self.url_raw, str):
             return self.url_raw
         else:
-            return unicode(self.url_raw, 'utf-8')
+            return str(self.url_raw, 'utf-8')
 
     def __repr__(self):
         return "URL(%s)" % str(self)
@@ -114,7 +114,7 @@ class URL:
     def unauth(self):
         if not self.is_auth():
             return self
-        return URL.objectify(urlparse.ParseResult(
+        return URL.objectify(urllib.parse.ParseResult(
             self.scheme, '%s:%s' % (self.hostname, self.port or {'https': 443, 'http': 80}[self.scheme]),
             self.path.replace('//', '/'), self.params, self.query, self.fragment))
 
@@ -167,7 +167,7 @@ class URL:
             if self.path.endswith("/"):
                 sep = ""
             ret_path = "%s%s%s" % (self.path, sep, uc2utf8(path.path))
-        return URL(urlparse.ParseResult(
+        return URL(urllib.parse.ParseResult(
             self.scheme or path.scheme, self.netloc or path.netloc, ret_path, path.params, path.query, path.fragment))
 
 def make(url):

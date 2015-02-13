@@ -14,8 +14,8 @@ class BaseElement(object):
     def __init__(self, name=None, value=None):
         self.children = []
         self.attributes = {}
-        if value and not isinstance(value, unicode):
-            value = unicode(value, 'utf-8')
+        if value and not isinstance(value, str):
+            value = str(value, 'utf-8')
         self.value = None
         if name is not None:
             self.attributes['name'] = name
@@ -34,7 +34,7 @@ class BaseElement(object):
         if self.value is not None:
             root.text = self.value
         if len(self.attributes) > 0:
-            for k in self.attributes.keys():
+            for k in list(self.attributes.keys()):
                 root.set(k, self.attributes[k])
         self.xmlchildren(root)
         return root

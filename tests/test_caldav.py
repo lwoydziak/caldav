@@ -2,14 +2,14 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-import urlparse
+import urllib.parse
 import logging
 import threading
 import time
 from nose.tools import assert_equal, assert_not_equal, assert_raises
 
-from conf import caldav_servers, proxy, proxy_noport
-from proxy import ProxyHandler, NonThreadingHTTPServer
+from .conf import caldav_servers, proxy, proxy_noport
+from .proxy import ProxyHandler, NonThreadingHTTPServer
 
 from caldav.davclient import DAVClient
 from caldav.objects import Principal, Calendar, Event, DAVObject, CalendarSet
@@ -76,7 +76,7 @@ class RepeatedFunctionalTestsBaseClass(object):
     def setup(self):
         logging.debug("############## test setup")
         self.conn_params = self.server_params.copy()
-        for x in self.conn_params.keys():
+        for x in list(self.conn_params.keys()):
             if not x in ('url', 'proxy', 'username', 'password', 'ssl_verify_cert'):
                 self.conn_params.pop(x)
         self.caldav = DAVClient(**self.conn_params)
@@ -220,10 +220,10 @@ class RepeatedFunctionalTestsBaseClass(object):
             assert_equal(len(events), 1)
 
     def testUnicodeEvent(self):
-        c = self.principal.make_calendar(name=u"Yølp", cal_id=testcal_id)
+        c = self.principal.make_calendar(name="Yølp", cal_id=testcal_id)
 
         ## add event
-        e1 = c.add_event(unicode(ev1.replace("Bastille Day Party", "Bringebærsyltetøyfestival"), 'utf-8'))
+        e1 = c.add_event(str(ev1.replace("Bastille Day Party", "Bringebærsyltetøyfestival"), 'utf-8'))
 
         ## c.events() should give a full list of events
         events = c.events()
@@ -396,14 +396,14 @@ class RepeatedFunctionalTestsBaseClass(object):
 
         r = c.date_search(datetime(2007,7,13,17,00,00),
                           datetime(2007,7,15,17,00,00))
-        for e in r: print e.data
+        for e in r: print(e.data)
         assert_equal(len(r), 1)
 
         e.instance = e2.instance
         e.save()
         r = c.date_search(datetime(2007,7,13,17,00,00),
                           datetime(2007,7,15,17,00,00))
-        for e in r: print e.data
+        for e in r: print(e.data)
         assert_equal(len(r), 1)
         
 
@@ -423,7 +423,7 @@ class RepeatedFunctionalTestsBaseClass(object):
 _servernames = set()
 for _caldav_server in caldav_servers:
     # create a unique identifier out of the server domain name
-    _parsed_url = urlparse.urlparse(_caldav_server['url'])
+    _parsed_url = urllib.parse.urlparse(_caldav_server['url'])
     _servername = _parsed_url.hostname.replace('.','_') + str(_parsed_url.port or '')
     while _servername in _servernames:
         _servername = _servername + '_'
@@ -490,8 +490,8 @@ class TestCalDAV:
         url1 = URL.objectify("http://foo:bar@www.example.com:8080/caldav.php/?foo=bar")
         url2 = URL.objectify(url1)
         url3 = URL.objectify("/bar")
-        url4 = URL.objectify(urlparse.urlparse(str(url1)))
-        url5 = URL.objectify(urlparse.urlparse("/bar"))
+        url4 = URL.objectify(urllib.parse.urlparse(str(url1)))
+        url5 = URL.objectify(urllib.parse.urlparse("/bar"))
     
         ## 2) __eq__ works well
         assert_equal(url1, url2)
@@ -560,7 +560,7 @@ class TestCalDAV:
                     .append(cdav.CompFilter("VEVENT")\
                     .append(cdav.PropFilter("UID")\
                     .append([cdav.TextMatch("pouet", negate = True)]))))
-        print filter
+        print(filter)
 
         crash = cdav.CompFilter()
         value = None

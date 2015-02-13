@@ -3,7 +3,7 @@
 
 import requests
 import logging
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import re
 from lxml import etree
 
@@ -84,8 +84,8 @@ class DAVClient:
                         "Content-Type": "text/xml",
                         "Accept": "text/xml"}
         if self.url.username is not None:
-            username = urllib.unquote(self.url.username)
-            password = urllib.unquote(self.url.password)
+            username = urllib.parse.unquote(self.url.username)
+            password = urllib.parse.unquote(self.url.password)
 
         self.username = username
         self.password = password
@@ -200,14 +200,14 @@ class DAVClient:
             logging.debug("using proxy - %s" % (proxies))
 
         # ensure that url is a unicode string
-        url = unicode(url)
+        url = str(url)
 
         combined_headers = self.headers
         combined_headers.update(headers)
         if body is None or body == "" and "Content-Type" in combined_headers:
             del combined_headers["Content-Type"]
 
-        if isinstance(body, unicode):
+        if isinstance(body, str):
             body = body.encode('utf-8')
 
         logging.debug("sending request - method={0}, url={1}, headers={2}\nbody:\n{3}".format(method, url.encode('utf-8'), combined_headers, body))

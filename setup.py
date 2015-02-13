@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 from setuptools import setup, find_packages
 
-version = '0.2.2'
+version = '0.3.1'
 
 if __name__ == '__main__':
     setup(
@@ -14,7 +14,7 @@ if __name__ == '__main__':
                      "Public License (GPL)",
                      "License :: OSI Approved :: Apache Software License",
                      "Operating System :: OS Independent",
-                     "Programming Language :: Python",
+                     "Programming Language :: Python,Python3",
                      "Topic :: Office/Business :: Scheduling",
                      "Topic :: Software Development :: Libraries "
                      ":: Python Modules"],
