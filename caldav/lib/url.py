@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import urllib.parse
+from caldav.lib.python_utilities import isPython3, to_unicode
+if isPython3():
+    from urllib import parse
+    from urllib.parse import ParseResult, SplitResult, urlparse, unquote
+else:
+    from urlparse import urlparse as parse
+    from urlparse import ParseResult, SplitResult
+    from urlparse import urlparse
+
 
 def uc2utf8(input):
     ## argh!  this feels wrong, but seems to be needed.
-    if type(input) == str:
+    if type(input) == str and not isPython3():
         return input.encode('utf-8')
     else:
         return input
@@ -32,7 +40,7 @@ class URL:
     instantiating the DAVClient object and cannot be overridden later.
 
     As of 2013-11, some methods in the caldav library expected strings
-    and some expected urlparse.ParseResult objects, some expected
+    and some expected urlParseResult objects, some expected
     fully qualified URLs and most expected absolute paths.  The purpose
     of this class is to ensure consistency and at the same time
     maintaining backward compatibility.  Basically, all methods should
@@ -40,7 +48,7 @@ class URL:
 
     """
     def __init__(self, url):
-        if isinstance(url, urllib.parse.ParseResult) or isinstance(url, urllib.parse.SplitResult):
+        if isinstance(url, ParseResult) or isinstance(url, SplitResult):
             self.url_parsed = url
             self.url_raw = None
         else:
@@ -80,7 +88,7 @@ class URL:
     ## class
     def __getattr__(self, attr):
         if self.url_parsed is None:
-            self.url_parsed = urllib.parse.urlparse(self.url_raw)
+            self.url_parsed = urlparse(self.url_raw)
         if hasattr(self.url_parsed, attr):
             return getattr(self.url_parsed, attr)
         else:
@@ -88,6 +96,8 @@ class URL:
 
     ## returns the url in text format
     def __str__(self):
+        if isPython3():
+            return self.__unicode__()
         return self.__unicode__().encode('utf-8')
 
     ## returns the url in text format
@@ -95,9 +105,9 @@ class URL:
         if self.url_raw is None:
             self.url_raw = self.url_parsed.geturl()
         if isinstance(self.url_raw, str):
-            return self.url_raw
+            return to_unicode(self.url_raw)
         else:
-            return str(self.url_raw, 'utf-8')
+            return to_unicode(str(self.url_raw))
 
     def __repr__(self):
         return "URL(%s)" % str(self)
@@ -114,7 +124,7 @@ class URL:
     def unauth(self):
         if not self.is_auth():
             return self
-        return URL.objectify(urllib.parse.ParseResult(
+        return URL.objectify(ParseResult(
             self.scheme, '%s:%s' % (self.hostname, self.port or {'https': 443, 'http': 80}[self.scheme]),
             self.path.replace('//', '/'), self.params, self.query, self.fragment))
 
@@ -132,7 +142,7 @@ class URL:
 
         ## This looks like a noop - but it may have the side effect
         ## that urlparser be run (actually not - unauth ensures we
-        ## have an urlparse.ParseResult object)
+        ## have an urlParseResult object)
         url.scheme
 
         ## make sure to delete the string version
@@ -148,7 +158,8 @@ class URL:
         self.  If the path already contains connection details and the
         connection details differ from self, raise an error.
         """
-        if not path:
+        pathAsString = str(path)
+        if not path or not pathAsString:
             return self
         path = URL.objectify(path)
         if (
@@ -167,7 +178,7 @@ class URL:
             if self.path.endswith("/"):
                 sep = ""
             ret_path = "%s%s%s" % (self.path, sep, uc2utf8(path.path))
-        return URL(urllib.parse.ParseResult(
+        return URL(ParseResult(
             self.scheme or path.scheme, self.netloc or path.netloc, ret_path, path.params, path.query, path.fragment))
 
 def make(url):

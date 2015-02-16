@@ -3,7 +3,12 @@
 
 import requests
 import logging
-import urllib.request, urllib.parse, urllib.error
+from caldav.lib.python_utilities import isPython3, to_unicode, to_wire
+if isPython3():
+    from urllib import parse
+    from urllib.parse import unquote
+else:
+    from urlparse import unquote, urlparse as parse
 import re
 from lxml import etree
 
@@ -84,8 +89,8 @@ class DAVClient:
                         "Content-Type": "text/xml",
                         "Accept": "text/xml"}
         if self.url.username is not None:
-            username = urllib.parse.unquote(self.url.username)
-            password = urllib.parse.unquote(self.url.password)
+            username = unquote(self.url.username)
+            password = unquote(self.url.password)
 
         self.username = username
         self.password = password
@@ -207,9 +212,6 @@ class DAVClient:
         if body is None or body == "" and "Content-Type" in combined_headers:
             del combined_headers["Content-Type"]
 
-        if isinstance(body, str):
-            body = body.encode('utf-8')
-
         logging.debug("sending request - method={0}, url={1}, headers={2}\nbody:\n{3}".format(method, url.encode('utf-8'), combined_headers, body))
         auth = None
         if self.auth is None and self.username is not None:
@@ -217,13 +219,13 @@ class DAVClient:
         else:
             auth = self.auth
 
-        r = requests.request(method, url, data=body, headers=combined_headers, proxies=proxies, auth=auth, verify=self.ssl_verify_cert)
+        r = requests.request(method, url, data=to_wire(body), headers=combined_headers, proxies=proxies, auth=auth, verify=self.ssl_verify_cert)
         response = DAVResponse(r)
 
         ## If server supports BasicAuth and not DigestAuth, let's try again:
         if response.status == 401 and self.auth is None and auth is not None:
             auth = requests.auth.HTTPBasicAuth(self.username, self.password)
-            r = requests.request(method, url, data=body, headers=combined_headers, proxies=proxies, auth=auth, verify=self.ssl_verify_cert)
+            r = requests.request(method, url, data=to_wire(body), headers=combined_headers, proxies=proxies, auth=auth, verify=self.ssl_verify_cert)
             response = DAVResponse(r)
 
         # this is an error condition the application wants to know

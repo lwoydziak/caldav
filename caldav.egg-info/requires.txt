@@ -4,3 +4,4 @@ nose
 coverage
 sphinx
 requests
+six

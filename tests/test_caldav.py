@@ -2,7 +2,13 @@
 # -*- encoding: utf-8 -*-
 
 from datetime import datetime
-import urllib.parse
+from caldav.lib.python_utilities import isPython3
+if isPython3():
+    from urllib import parse
+    from urllib.parse import urlparse
+else:
+    from urlparse import urlparse as parse
+    from urlparse import urlparse
 import logging
 import threading
 import time
@@ -18,6 +24,7 @@ from caldav.lib import url
 from caldav.lib import error
 from caldav.lib.namespace import ns
 from caldav.elements import dav, cdav
+from caldav.lib.python_utilities import to_local, to_str
 
 
 ev1 = """BEGIN:VCALENDAR
@@ -112,11 +119,11 @@ class RepeatedFunctionalTestsBaseClass(object):
 <D:propfind xmlns:D="DAV:">
   <D:allprop/>
         </D:propfind>""")
-        assert('resourcetype' in foo.raw)
+        assert('resourcetype' in to_local(foo.raw))
         
         ## next, the internal _query_properties, returning an xml tree ...
         foo2 = self.principal._query_properties([dav.Status(),])
-        assert('resourcetype' in foo.raw)
+        assert('resourcetype' in to_local(foo.raw))
         ## TODO: more advanced asserts
 
     def testGetCalendarHomeSet(self):
@@ -223,7 +230,7 @@ class RepeatedFunctionalTestsBaseClass(object):
         c = self.principal.make_calendar(name="Yølp", cal_id=testcal_id)
 
         ## add event
-        e1 = c.add_event(str(ev1.replace("Bastille Day Party", "Bringebærsyltetøyfestival"), 'utf-8'))
+        e1 = c.add_event(to_str(ev1.replace("Bastille Day Party", "Bringebærsyltetøyfestival")))
 
         ## c.events() should give a full list of events
         events = c.events()
@@ -423,7 +430,7 @@ class RepeatedFunctionalTestsBaseClass(object):
 _servernames = set()
 for _caldav_server in caldav_servers:
     # create a unique identifier out of the server domain name
-    _parsed_url = urllib.parse.urlparse(_caldav_server['url'])
+    _parsed_url = urlparse(_caldav_server['url'])
     _servername = _parsed_url.hostname.replace('.','_') + str(_parsed_url.port or '')
     while _servername in _servernames:
         _servername = _servername + '_'
@@ -490,8 +497,8 @@ class TestCalDAV:
         url1 = URL.objectify("http://foo:bar@www.example.com:8080/caldav.php/?foo=bar")
         url2 = URL.objectify(url1)
         url3 = URL.objectify("/bar")
-        url4 = URL.objectify(urllib.parse.urlparse(str(url1)))
-        url5 = URL.objectify(urllib.parse.urlparse("/bar"))
+        url4 = URL.objectify(urlparse(str(url1)))
+        url5 = URL.objectify(urlparse("/bar"))
     
         ## 2) __eq__ works well
         assert_equal(url1, url2)

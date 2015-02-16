@@ -14,6 +14,7 @@ from lxml import etree
 from caldav.lib import error, vcal, url
 from caldav.lib.url import URL
 from caldav.elements import dav, cdav
+from caldav.lib.python_utilities import to_unicode
 
 
 class DAVObject(object):
@@ -308,7 +309,7 @@ class Calendar(DAVObject):
         if id is None:
             id = str(uuid.uuid1())
         self.id = id
-            
+
         path = self.parent.url.join(id)
         self.url = path
 
@@ -550,7 +551,7 @@ class Event(DAVObject):
 
     def set_data(self, data):
         self._data = vcal.fix(data)
-        self._instance = vobject.readOne(io.StringIO(self._data))
+        self._instance = vobject.readOne(io.StringIO(to_unicode(self._data)))
         return self
 
     def get_data(self):

@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from caldav.lib.python_utilities import to_wire, to_local
 
 __doc__ = """Tiny HTTP Proxy.
 
@@ -17,7 +18,21 @@ Any help will be greatly appreciated.		SUZUKI Hisao
 
 __version__ = "0.3.1"
 
-import http.server, select, socket, socketserver, urllib.parse
+from caldav.lib.python_utilities import isPython3
+if isPython3():
+    from urllib import parse
+    from urllib.parse import urlparse, urlunparse
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from socketserver import ThreadingMixIn
+else:
+    from urlparse import urlparse as parse
+    from urlparse import urlparse, urlunparse
+    from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+    from SocketServer import ThreadingMixIn
+
+import select
+import socket
+
 import logging
 import logging.handlers
 import getopt
@@ -31,8 +46,8 @@ import ftplib
 
 DEFAULT_LOG_FILENAME = "proxy.log"
 
-class ProxyHandler (http.server.BaseHTTPRequestHandler):
-    __base = http.server.BaseHTTPRequestHandler
+class ProxyHandler (BaseHTTPRequestHandler):
+    __base = BaseHTTPRequestHandler
     __base_handle = __base.handle
 
     server_version = "TinyHTTPProxy/" + __version__
@@ -77,7 +92,7 @@ class ProxyHandler (http.server.BaseHTTPRequestHandler):
             self.connection.close()
 
     def do_GET(self):
-        (scm, netloc, path, params, query, fragment) = urllib.parse.urlparse(
+        (scm, netloc, path, params, query, fragment) = urlparse(
             self.path, 'http')
         if scm not in ('http', 'ftp') or fragment or not netloc:
             self.send_error(400, "bad url %s" % self.path)
@@ -87,16 +102,16 @@ class ProxyHandler (http.server.BaseHTTPRequestHandler):
             if scm == 'http':
                 if self._connect_to(netloc, soc):
                     self.log_request()
-                    soc.send("%s %s %s\r\n" % (self.command,
-                                               urllib.parse.urlunparse(('', '', path,
-                                                                    params, query,
-                                                                    '')),
-                                               self.request_version))
+                    soc.send(to_wire("%s %s %s\r\n" % (self.command,
+                                                       urlunparse(('', '', path,
+                                                                params, query,
+                                                                '')),
+                                                       self.request_version)))
                     self.headers['Connection'] = 'close'
                     del self.headers['Proxy-Connection']
                     for key_val in list(self.headers.items()):
-                        soc.send("%s: %s\r\n" % key_val)
-                    soc.send("\r\n")
+                        soc.send(to_wire("%s: %s\r\n" % key_val))
+                    soc.send(to_wire("\r\n"))
                     self._read_write(soc)
             elif scm == 'ftp':
                 # fish out user and password information
@@ -139,7 +154,7 @@ class ProxyHandler (http.server.BaseHTTPRequestHandler):
                         else: out.send(data)
                         count = 0
             if count == max_idling: break
-        if local: return local_data
+        if local: return to_local(local_data)
         return None
 
     do_HEAD = do_GET
@@ -156,16 +171,16 @@ class ProxyHandler (http.server.BaseHTTPRequestHandler):
         self.server.logger.log (logging.ERROR, "%s %s", self.address_string (),
                                 format % args)
 
-class ThreadingHTTPServer (socketserver.ThreadingMixIn,
-                           http.server.HTTPServer):
+class ThreadingHTTPServer (ThreadingMixIn,
+                           HTTPServer):
     def __init__ (self, server_address, RequestHandlerClass, logger=None):
-        http.server.HTTPServer.__init__ (self, server_address,
+        HTTPServer.__init__ (self, server_address,
                                             RequestHandlerClass)
         self.logger = logger
 
-class NonThreadingHTTPServer (http.server.HTTPServer):
+class NonThreadingHTTPServer (HTTPServer):
     def __init__ (self, server_address, RequestHandlerClass, logger=None):
-        http.server.HTTPServer.__init__ (self, server_address,
+        HTTPServer.__init__ (self, server_address,
                                             RequestHandlerClass)
         self.logger = logger
 

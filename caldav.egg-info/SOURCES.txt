@@ -19,6 +19,7 @@ caldav/elements/dav.py
 caldav/lib/__init__.py
 caldav/lib/error.py
 caldav/lib/namespace.py
+caldav/lib/python_utilities.py
 caldav/lib/url.py
 caldav/lib/vcal.py
 tests/__init__.py
