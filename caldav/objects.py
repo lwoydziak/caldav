@@ -254,7 +254,7 @@ class Principal(DAVObject):
     This class represents a DAV Principal. It doesn't do much, except
     keep track of the URLs for the calendar-home-set, etc.
     """
-    def __init__(self, client=None, url=None):
+    def __init__(self, client=None, url=None, load_balanced_host=False):
         """
         url input is for backward compatibility and should normally be avoided.
 
@@ -262,6 +262,7 @@ class Principal(DAVObject):
         """
         self.client = client
         self._calendar_home_set = None
+        self._load_balanced_host = load_balanced_host
 
         ## backwards compatibility.  
         if url is not None:
@@ -292,7 +293,8 @@ class Principal(DAVObject):
         if isinstance(url, CalendarSet):
             self._calendar_home_set = url
         else:
-            self._calendar_home_set = CalendarSet(self.client, self.client.url.join(URL.objectify(url)))
+            self.client.url = URL.objectify(url) if self._load_balanced_host else self.client.url.join(URL.objectify(url))
+            self._calendar_home_set = CalendarSet(self.client, self.client.url)
 
     def calendars(self):
         return self.calendar_home_set.calendars()
