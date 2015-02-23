@@ -292,9 +292,10 @@ class Principal(DAVObject):
     def calendar_home_set(self, url):
         if isinstance(url, CalendarSet):
             self._calendar_home_set = url
-        else:
-            self.client.url = URL.objectify(url) if self._load_balanced_host else self.client.url.join(URL.objectify(url))
-            self._calendar_home_set = CalendarSet(self.client, self.client.url)
+            return
+        sanitized_url = URL.objectify(url)
+        self.client.url = sanitized_url if self._load_balanced_host else self.client.url
+        self._calendar_home_set = CalendarSet(self.client, self.client.url.join(sanitized_url))
 
     def calendars(self):
         return self.calendar_home_set.calendars()

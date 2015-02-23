@@ -16,6 +16,8 @@ from caldav.lib import error
 from caldav.lib.url import URL
 from caldav.objects import Principal
 
+log = logging.getLogger('caldav')
+
 
 class DAVResponse:
     """
@@ -35,9 +37,9 @@ class DAVResponse:
         self.headers = response.headers
         self.status = response.status_code
         self.reason = response.reason
-        logging.debug("response headers: " + str(self.headers))
-        logging.debug("response status: " + str(self.status))
-        logging.debug("raw response: " + str(self.raw))
+        log.debug("response headers: " + str(self.headers))
+        log.debug("response status: " + str(self.status))
+        log.debug("raw response: " + str(self.raw))
 
         try:
             self.tree = etree.XML(self.raw)
@@ -67,7 +69,7 @@ class DAVClient:
          ** ssl_verify_cert can be the path of a CA-bundle or False.
         """
 
-        logging.debug("url: " + str(url))
+        log.debug("url: " + str(url))
         self.url = URL.objectify(url)
 
         # Prepare proxy info
@@ -82,7 +84,7 @@ class DAVClient:
             p = self.proxy.split(":")
             if len(p) == 2:
                 self.proxy += ':8080'
-            logging.debug("init - proxy: %s" % (self.proxy))
+            log.debug("init - proxy: %s" % (self.proxy))
 
         # Build global headers
         self.headers = {"User-Agent": "Mozilla/5.0",
@@ -97,7 +99,7 @@ class DAVClient:
         self.auth = auth ## TODO: it's possible to force through a specific auth method here, but no test code for this.
         self.ssl_verify_cert = ssl_verify_cert
         self.url = self.url.unauth()
-        logging.debug("self.url: " + str(url))
+        log.debug("self.url: " + str(url))
 
     def principal(self):
         """
@@ -202,7 +204,7 @@ class DAVClient:
         proxies = None
         if self.proxy is not None:
             proxies = {url.scheme: self.proxy}
-            logging.debug("using proxy - %s" % (proxies))
+            log.debug("using proxy - %s" % (proxies))
 
         # ensure that url is a unicode string
         url = str(url)
@@ -212,7 +214,7 @@ class DAVClient:
         if body is None or body == "" and "Content-Type" in combined_headers:
             del combined_headers["Content-Type"]
 
-        logging.debug("sending request - method={0}, url={1}, headers={2}\nbody:\n{3}".format(method, url.encode('utf-8'), combined_headers, body))
+        log.debug("sending request - method={0}, url={1}, headers={2}\nbody:\n{3}".format(method, url.encode('utf-8'), combined_headers, body))
         auth = None
         if self.auth is None and self.username is not None:
             auth = requests.auth.HTTPDigestAuth(self.username, self.password)

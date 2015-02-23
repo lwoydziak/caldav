@@ -26,6 +26,13 @@ from caldav.lib.namespace import ns
 from caldav.elements import dav, cdav
 from caldav.lib.python_utilities import to_local, to_str
 
+log = logging.getLogger("caldav")
+
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        logging.debug(record)
+
+log.addHandler(NullHandler())
 
 ev1 = """BEGIN:VCALENDAR
 VERSION:2.0
